@@ -1,0 +1,50 @@
+Objectives: through competitiveness, encourages reading of history & discussion of history; or gives history nerds more fun facts to bore people with
+
+TODO
+
+Mobile friendly
+
+DAY: pull from current date
+
+User can toggle game mode (paused), and links become informational when not in game mode; controls up top by Day; stats to right of controls; nav fixed to top
+
+LEFT COLUMN: Multiple choice years in random order (stacked on left in larger than mobile window; row of 4 columns on top of Events column in mobile window
+	-default gamemode is year
+	-order of 4 choices chronological
+	-if event is within last 10 years, all four choices must be as well; if there aren't enough events w/in last 10 years, randomize year not matching any of the other three choices
+	-highlight green if correct answer chosen (clicked on)
+	-highlight red if incorrect answer chosen; user gets two more tries to guess correctly;
+	- 4 points if correct, 2 for guessing right on second try, 1 for guessing right on the third try
+
+RIGHT COLUMN: Events (NOTE EVENT MODE IS SECONDARY PRIORITY TO YEAR MODE); 
+	-in event mode; if event-mode is triggered, repopulate year (with single year) and random events;
+	-if event is w/in last 10 years, all four events listed must be w/in last 10 years; w/in last 50 years, all four must be from within 20 years of each other, or next best window;
+	-Same highlighting as above
+
+PAUSED/INFO Mode
+	- INFO Box dynamically injected above events
+	- clicking on a year populates infobox with list of events in that year (needs close button)
+	- clicking on a linked part of event will populate the summary/synopsys info from the wikipedia article, along with the picture if one is provided
+	- player can click on more info, which will redirect to the full wikipedia article
+	- any time game is paused/switched to info mode, user gets 0 score on the question if they open the info box;
+
+STATS (in fixed top nav):
+	- score
+	- questions attempted (as fraction);
+	- average (score out of total available (score/questions attempted * 4))
+	- can pull down expanded information with score for questions attempted, year and event;
+	//future: ability to share this info with a friend (both)
+
+organization:
+	array of event objects; properties:
+		- year
+		- event - stringified html (so links function)
+		- createGuessYear: creates question with MC years
+		- createGuessEvent: creates question with MC events
+		- score - num (defaults to 4; degraded based on performance;
+		- question attempted: boolean reflecting whether question was tried yet (false by default)
+		- summary: upper section
+		- OPTIONAL: image; include image if available; (scale to small size); 
+
+
+
