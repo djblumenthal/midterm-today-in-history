@@ -19,42 +19,32 @@ HistoryEvent.prototype.guessYear = function(){
 
 }
 
+// create string with date for query to wikipedia
 var today = new Date();
-Date.prototype.strDate = function(){
-	month = today.getMonth();
-	if (today.getMonth() == 0){
-		month = 'January';
-	}if (today.getMonth() == 1){
-		month = 'February';
-	}if (today.getMonth() == 2){
-		month = 'March';
-	}if (today.getMonth() == 3){
-		month = 'April';
-	}if (today.getMonth() == 4){
-		month = 'May';
-	}if (today.getMonth() == 5){
-		month = 'June';
-	}if (today.getMonth() == 6){
-		month = 'July';
-	}if (today.getMonth() == 7){
-		month = 'August';
-	}if (today.getMonth() == 8){
-		month = 'September';
-	}if (today.getMonth() == 9){
-		month = 'October';
-	}if (today.getMonth() == 10){
-		month = 'November';
-	}if (today.getMonth() == 11){
-		month = 'December';
-	}return month+'%'+today.getDate()+'';
+Date.prototype.strDateQuery = function(){
+	var monthsArr = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+	var month = today.getMonth();
+	return monthsArr[month]+'%20'+today.getDate()+'';
 }
 
-$.getJSON("http://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvlimit=1&rvparse=&rvsection=1&titles="+today.strDate()+"&format=json&callback?", function(data){
-	console.log(data);
-});
+// callback executed during query of Wikipedia, returning events html from wikipedia query object
+var getTodaysEvents = function(wikiQueryData){
+	// get pageID for use in extracting content for any date
+	var pageID = wikiQueryData.query.pageids[0];
+	// extract events content
+	console.log(wikiQueryData.query.pages[pageID].revisions[0]['*']);
+	return wikiQueryData.query.pages[pageID].revisions[0]['*']
+}
 
 
+
+// URL used to query wikipedia via JSONP
+var wikiEventsQueryURL = "http://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=content&rvparse=&rvlimit=1&rvsection=1&indexpageids=&titles="+today.strDateQuery()+"&format=json&callback=getTodaysEvents";
+
+// variable containing script element
+var getWikiEventsScriptEl = $('<script>').attr("src", wikiEventsQueryURL);
 
 $(document).on('ready', function() {
-  
+	// inject script to get events data from wikipedia via JSONP
+  $('body').append(getWikiEventsScriptEl);
 });
