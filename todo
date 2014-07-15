@@ -36,7 +36,8 @@ STATS (in fixed top nav):
 	//future: ability to share this info with a friend (both)
 
 organization:
-	array of event objects; properties:
+	on page load, take current date, query wikipedia for article with that date, pull 'events' section and extract the following properties to create a new events object;
+	push that object to an array of events
 		- year
 		- event - stringified html (so links function)
 		- createGuessYear: creates question with MC years
