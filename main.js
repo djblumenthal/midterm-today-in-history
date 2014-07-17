@@ -9,7 +9,7 @@ var pickIndexToCreateQuestion = function(){
 	while (historyEventArr[eventIndex].attemptedQuestion);
 	// set the attempted value to true, and return that index value to create question function
 	historyEventArr[eventIndex].attemptedQuestion = true;
-	return eventIndex;
+	return getStartingIndexAndRange(eventIndex);
 }
 
 
@@ -32,33 +32,44 @@ var HistoryEvent = function (eventStr, year){
 }
 
 
-// create guess year object
 
-HistoryEvent.prototype.guessYear = function(historyEventIndex){
-	// determine starting point for question choices in array
-	var startingIndex = _.random(-NUMBER_OF_ANSWER_CHOICES, NUMBER_OF_ANSWER_CHOICES) + historyEventIndex;
-	// declare variable sameYearCount to track how many events after historyEvent happened in the same year
-	var sameYearCount = 0;
-	// make sure starting index for events in guessYear question are within array range
-	if (startingIndex < 0){
-		startingIndex = 0;
-	}if (startingIndex > historyEventArr.length - NUMBER_OF_ANSWER_CHOICES){
-		startingIndex = historyEventArr.length - NUMBER_OF_ANSWER_CHOICES;
-	}
-
+var getSameYearCount = function(startingIndex){
 	// iterate through events with higher index than startingIndex and check for same year value, 
+	var sameYearCount = 0;
 	for (var i=startingIndex; i<startingIndex + NUMBER_OF_ANSWER_CHOICES; i++){
 		// if the year value is the same, increment sameYearCount
 		if (historyEventArr[i].year === historyEventArr[i+1].year){
 			sameYearCount++;
 		}
 	}
-	// if the range of year choices after accounting for duplicate years is greater than the length of the length of the array, decrease the starting index to remain within range of array
-	if (startingIndex + NUMBER_OF_ANSWER_CHOICES-1 + sameYearCount >= historyEventArr.length){
-		startingIndex -= sameYearCount;
-	}
+	return sameYearCount;
 }
 
+var getStartingIndexAndRange = function(historyEventIndex){
+	// determine starting point for question choices in array
+	var startingIndex = _.random(-NUMBER_OF_ANSWER_CHOICES, NUMBER_OF_ANSWER_CHOICES) + historyEventIndex;
+
+	// make sure starting index for events in guessYear question are within array range
+	if (startingIndex < 0){
+		startingIndex = 0;
+	}if (startingIndex > historyEventArr.length - NUMBER_OF_ANSWER_CHOICES){
+		startingIndex = historyEventArr.length - NUMBER_OF_ANSWER_CHOICES;
+	}
+	// if the range of year choices after accounting for duplicate years (sameYearCount)is greater than the length of the array, decrease the starting index to remain within range of array
+	var sameYearCount = getSameYearCount(startingIndex);
+	while (startingIndex + NUMBER_OF_ANSWER_CHOICES-1 + sameYearCount >= historyEventArr.length){
+		startingIndex -= sameYearCount;
+	}return createGuessYearArr(startingIndex, startingIndex + NUMBER_OF_ANSWER_CHOICES + sameYearCount);
+}
+
+var createGuessYearArr = function(startingIndex, questionRange){
+	var guessYearArr = [];
+	for (var i = startingIndex; i <questionRange; i++){
+		if (i==startingIndex || (historyEventArr[i].year != historyEventArr[i-1].year)) {
+			guessYearArr.push(historyEventArr[i].year);
+		}
+	}
+}
 
 // create URL used to query wikipedia
 var createWikiEventsScript = function(dateValueForQuery){
@@ -127,7 +138,6 @@ var parseEventsHTMLIntoObjects = function(listOfEvents){
 		historyEventArr.push(newHistoryEvent);
 	}
 }
-
 
 $(document).on('ready', function() {
 	// inject JSONP script to get events data from wikipedia
