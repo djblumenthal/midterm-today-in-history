@@ -1,5 +1,7 @@
 // array of history event objects
 var historyEventArr = [];
+var NUMBER_OF_ANSWER_CHOICES = 4;
+
 var pickIndexToCreateQuestion = function(){
 	// set a random index value and check if a question has already been generated for for that event
 	var eventIndex;
@@ -11,7 +13,6 @@ var pickIndexToCreateQuestion = function(){
 }
 
 
-// track which questions have already been asked
 
 
 // create string with today's date for article title parameter in wikipedia query
@@ -40,25 +41,25 @@ HistoryEvent.prototype.pushToArr = function(){
 
 HistoryEvent.prototype.guessYear = function(historyEventIndex){
 	// determine starting point for question choices in array
-	var startingIndex = _.random(-3, 3) + historyEventIndex;
+	var startingIndex = _.random(-NUMBER_OF_ANSWER_CHOICES, NUMBER_OF_ANSWER_CHOICES) + historyEventIndex;
 	// declare variable sameYearCount to track how many events after historyEvent happened in the same year
 	var sameYearCount = 0;
 	// make sure starting index for events in guessYear question are within array range
 	if (startingIndex < 0){
 		startingIndex = 0;
-	}if (startingIndex > historyEventArr.length - 4){
-		startingIndex = historyEventArr.length - 4;
+	}if (startingIndex > historyEventArr.length - NUMBER_OF_ANSWER_CHOICES){
+		startingIndex = historyEventArr.length - NUMBER_OF_ANSWER_CHOICES;
 	}
 
 	// iterate through events with higher index than startingIndex and check for same year value, 
-	for (var i=startingIndex; i<startingIndex+4; i++){
+	for (var i=startingIndex; i<startingIndex + NUMBER_OF_ANSWER_CHOICES; i++){
 		// if the year value is the same, increment sameYearCount
 		if (historyEventArr[i].year === historyEventArr[i+1].year){
 			sameYearCount++;
 		}
 	}
 	// if the range of year choices after accounting for duplicate years is greater than the length of the length of the array, decrease the starting index to remain within range of array
-	if (startingIndex + 3 + sameYearCount >= historyEventArr.length){
+	if (startingIndex + NUMBER_OF_ANSWER_CHOICES-1 + sameYearCount >= historyEventArr.length){
 		startingIndex -= sameYearCount;
 	}
 }
@@ -90,37 +91,45 @@ var getTodaysEvents = function(wikiQueryData){
 	return parseEventsHTMLIntoObjects(eventListItems);
 }
 
+// check if character in string is a number (char codes 48 - 57 ==> 0-9)
+var testIfCharIsNum = function(str, index){
+	return (str.charCodeAt(index)>47 && str.charCodeAt(index)<58);
+}
+
+var parseYearFromScrapedEventString = function(scrapedEventStr){
+	var yearStr = '';
+	// loop through each character in scraped text
+	for (var i=0; i < scrapedEventStr.length; i++){
+			// check if character is a number (char codes 48 - 57 ==> 0-9)		
+		if (testIfCharIsNum(scrapedEventStr, i)) {
+			// if character is a number, add it to the year string
+			yearStr += scrapedEventStr.charAt(i);
+			// check if next character is not a number (if not, year value is complete and break out of the loop for this <li>) year, or break out of making year string
+			if (!(testIfCharIsNum(scrapedEventStr, i+1))){
+				// if the next character is not a number, check if it's a BC year
+				if ((scrapedEventStr.charAt(i+2)=='B') && (scrapedEventStr.charAt(i+3)=='C')) {
+					// if it's a BC year, add BC to the year value before breaking out of the loop for this <li>
+					yearStr += ' BC';
+					break;
+				}
+				// end loop for this <li> if year value is complete
+				break; 
+			}
+		}
+	}return yearStr;
+}
 
 var parseEventsHTMLIntoObjects = function(listOfEvents){
 	// loop through each event <li>
 	for (var i=0; i < listOfEvents.length; i++){
-		// declare a yearStr variable for year of each event <li>
-		var yearStr = '';
-		// loop through each character in <li> text
-		for (var j=0; j < listOfEvents.eq(i).text().length; j++){
-			// check if character is a number (char codes 48 - 57 ==> 0-9)
-			if (listOfEvents.eq(i).text().charCodeAt(j)>47 && listOfEvents.eq(i).text().charCodeAt(j)<58) {
-				// if character is a number, add it to the year string
-				yearStr += listOfEvents.eq(i).text().charAt(j);
-				// check if next character is not a number (if not, year value is complete and break out of the loop for this <li>) year, or break out of making year string
-				if (!(listOfEvents.eq(i).text().charCodeAt(j+1)>47 && listOfEvents.eq(i).text().charCodeAt(j+1)<58)) {
-					// if the next character is not a number, check if it's a BC year
-					if ((listOfEvents.eq(i).text().charAt(j+2)=='B') && (listOfEvents.eq(i).text().charAt(j+3)=='C')) {
-						// if it's a BC year, add BC to the year value before breaking out of the loop for this <li>
-						yearStr += ' BC';
-						break;
-					}
-					// end loop for this <li> if year value is complete
-					break; 
-				}
-			}
-		}
+		var scrapedEventStr = listOfEvents.eq(i).text();
+		var yearStr = parseYearFromScrapedEventString(scrapedEventStr);
 		// parse string version of events
-		var eventStr = listOfEvents.eq(i).text().slice(yearStr.length + 3);
+		var eventStr = scrapedEventStr.slice(yearStr.length + 3);
 		// create new HistoryEvent object using year string and event string
 		var newHistoryEvent = new HistoryEvent(eventStr, yearStr);
 		// push new HistoryEvent object to array containing HistoryEvents
-		newHistoryEvent.pushToArr();
+		historyEventArr.push(newHistoryEvent);
 	}
 }
 

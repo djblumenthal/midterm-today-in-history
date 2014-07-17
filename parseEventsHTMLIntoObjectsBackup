@@ -1,0 +1,32 @@
+var parseEventsHTMLIntoObjects = function(listOfEvents){
+	// loop through each event <li>
+	for (var i=0; i < listOfEvents.length; i++){
+		// declare a yearStr variable for year of each event <li>
+		var yearStr = '';
+		// loop through each character in <li> text
+		for (var j=0; j < listOfEvents.eq(i).text().length; j++){
+			// check if character is a number (char codes 48 - 57 ==> 0-9)
+			if (listOfEvents.eq(i).text().charCodeAt(j)>47 && listOfEvents.eq(i).text().charCodeAt(j)<58) {
+				// if character is a number, add it to the year string
+				yearStr += listOfEvents.eq(i).text().charAt(j);
+				// check if next character is not a number (if not, year value is complete and break out of the loop for this <li>) year, or break out of making year string
+				if (!(listOfEvents.eq(i).text().charCodeAt(j+1)>47 && listOfEvents.eq(i).text().charCodeAt(j+1)<58)) {
+					// if the next character is not a number, check if it's a BC year
+					if ((listOfEvents.eq(i).text().charAt(j+2)=='B') && (listOfEvents.eq(i).text().charAt(j+3)=='C')) {
+						// if it's a BC year, add BC to the year value before breaking out of the loop for this <li>
+						yearStr += ' BC';
+						break;
+					}
+					// end loop for this <li> if year value is complete
+					break; 
+				}
+			}
+		}
+		// parse string version of events
+		var eventStr = listOfEvents.eq(i).text().slice(yearStr.length + 3);
+		// create new HistoryEvent object using year string and event string
+		var newHistoryEvent = new HistoryEvent(eventStr, yearStr);
+		// push new HistoryEvent object to array containing HistoryEvents
+		historyEventArr.push(newHistoryEvent);
+	}
+}
