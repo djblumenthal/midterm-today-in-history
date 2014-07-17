@@ -18,11 +18,10 @@ var pickIndexToCreateQuestion = function(){
 // create string with today's date for article title parameter in wikipedia query
 var today = new Date();
 
-// add it as helper function, not on prototype
-Date.prototype.strDateQuery = function(){
+var strDateQuery = function(dateObj){
 	var monthsArr = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-	var month = today.getMonth();
-	return createWikiEventsScript(monthsArr[month]+'%20'+today.getDate()+'');
+	var month = dateObj.getMonth();
+	return createWikiEventsScript(monthsArr[month]+'%20'+dateObj.getDate()+'');
 }
 // constructor for history event objects
 var HistoryEvent = function (eventStr, year){
@@ -32,10 +31,6 @@ var HistoryEvent = function (eventStr, year){
 	this.attemptedQuestion = false;
 }
 
-// HistoryEvent method to push HistoryEvent object to array
-HistoryEvent.prototype.pushToArr = function(){
-	historyEventArr.push(this);
-}
 
 // create guess year object
 
@@ -136,5 +131,5 @@ var parseEventsHTMLIntoObjects = function(listOfEvents){
 
 $(document).on('ready', function() {
 	// inject JSONP script to get events data from wikipedia
-  $('body').append(today.strDateQuery());
+  $('body').append(strDateQuery(today));
 });
