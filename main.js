@@ -2,13 +2,29 @@
 var historyEventArr = [];
 var NUMBER_OF_ANSWER_CHOICES = 4;
 
+var StatsObj = function(){
+	this.totalAttempted = 0;
+	this.totalPoints = 0;
+}
+
+StatsObj.prototype.averagePerformance = function(){
+	return this.totalPoints/(this.totalAttempted);
+}
+
+var userStats = new StatsObj();
+
 var pickIndexToCreateQuestion = function(){
 	// set a random index value and check if a question has already been generated for for that event
 	var eventIndex;
-	do eventIndex = _.random(historyEventArr.length)
+	do eventIndex = _.random(historyEventArr.length-1)
 	while (historyEventArr[eventIndex].attemptedQuestion);
 	// set the attempted value to true, and return that index value to create question function
+	// console.log(eventIndex);
 	historyEventArr[eventIndex].attemptedQuestion = true;
+	userStats.totalAttempted++;
+	// console.log(" year: "+ historyEventArr[eventIndex].year + " event: " + historyEventArr[eventIndex].eventStr);
+	var eventEl = $('<div>').addClass('col-sm-12 history-event').text(historyEventArr[eventIndex].eventStr).attr('data-eventyear', historyEventArr[eventIndex].year).attr('data-eventindex', eventIndex);
+	$('#events-row').append(eventEl);
 	return getStartingIndexAndRange(eventIndex);
 }
 
@@ -36,9 +52,9 @@ var HistoryEvent = function (eventStr, year){
 var getSameYearCount = function(startingIndex){
 	// iterate through events with higher index than startingIndex and check for same year value, 
 	var sameYearCount = 0;
-	for (var i=startingIndex; i<startingIndex + NUMBER_OF_ANSWER_CHOICES; i++){
+	for (var i=startingIndex+1; i<startingIndex + NUMBER_OF_ANSWER_CHOICES; i++){
 		// if the year value is the same, increment sameYearCount
-		if (historyEventArr[i].year === historyEventArr[i+1].year){
+		if (historyEventArr[i].year === historyEventArr[i-1].year){
 			sameYearCount++;
 		}
 	}
@@ -47,7 +63,7 @@ var getSameYearCount = function(startingIndex){
 
 var getStartingIndexAndRange = function(historyEventIndex){
 	// determine starting point for question choices in array
-	var startingIndex = _.random(-NUMBER_OF_ANSWER_CHOICES, NUMBER_OF_ANSWER_CHOICES) + historyEventIndex;
+	var startingIndex = historyEventIndex - _.random(NUMBER_OF_ANSWER_CHOICES-1);
 
 	// make sure starting index for events in guessYear question are within array range
 	if (startingIndex < 0){
@@ -58,16 +74,26 @@ var getStartingIndexAndRange = function(historyEventIndex){
 	// if the range of year choices after accounting for duplicate years (sameYearCount)is greater than the length of the array, decrease the starting index to remain within range of array
 	var sameYearCount = getSameYearCount(startingIndex);
 	while (startingIndex + NUMBER_OF_ANSWER_CHOICES-1 + sameYearCount >= historyEventArr.length){
-		startingIndex -= sameYearCount;
-	}return createGuessYearArr(startingIndex, startingIndex + NUMBER_OF_ANSWER_CHOICES + sameYearCount);
+		startingIndex --;
+	}return createGuessYearArr(startingIndex);
 }
 
-var createGuessYearArr = function(startingIndex, questionRange){
+var createGuessYearArr = function(startingIndex){
 	var guessYearArr = [];
-	for (var i = startingIndex; i <questionRange; i++){
+	for (var i = startingIndex; i <historyEventArr.length; i++){
+		if (guessYearArr.length === NUMBER_OF_ANSWER_CHOICES){
+			break;
+		}
 		if (i==startingIndex || (historyEventArr[i].year != historyEventArr[i-1].year)) {
 			guessYearArr.push(historyEventArr[i].year);
 		}
+	}return renderGuessYearArr(guessYearArr);
+}
+
+var renderGuessYearArr = function (arr){
+	for (var i=0; i<arr.length; i++){
+		var yearEl = $('<div>').addClass('col-sm-12 year-choice').attr('id', 'choice'+i).text(arr[i]);
+		$('#dates-row').append(yearEl);
 	}
 }
 
@@ -90,7 +116,7 @@ var getTodaysEvents = function(wikiQueryData){
 	// pass raw events html to a container div
 	var todaysEventsContainer = $('<div class="todays-events-container">').html(todaysEventsRawHTML)
 	// append todaysEventsContainer to the main content div, and hide from page view
-	$('.container').append(todaysEventsContainer);
+	$('.container').after(todaysEventsContainer);
 	$(todaysEventsContainer).hide();
 	// create selector to select all event list items in events HTML, & pass to parseEventsHTMLIntoObjects
 	var eventListItems = $('.todays-events-container > ul li');
@@ -139,7 +165,56 @@ var parseEventsHTMLIntoObjects = function(listOfEvents){
 	}
 }
 
+var clickedAnswer = function(){
+	if ($(this).text() === $('.history-event').attr('data-eventyear')){
+		return clickedCorrectAnswer(this);
+	}else if(!($(this).text() === $('.history-event').attr('data-eventyear'))) {
+		return clickedWrongAnswer(this);
+	}
+}
+
+var clickedCorrectAnswer = function(el){
+	$('#dates-row').off('click', '.year-choice', clickedAnswer);
+	console.log('correct!');
+	$(el).css('background-color', 'rgb(39, 174, 96)');
+	console.log(historyEventArr[$('.history-event').attr('data-eventindex')].score);
+	userStats.totalPoints += historyEventArr[$('.history-event').attr('data-eventindex')].score;
+	$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
+	$('#next-question').on('click', function(){
+		$('#dates-row').empty();
+		$('#events-row').empty();
+		pickIndexToCreateQuestion();
+		$('#dates-row').on('click', '.year-choice', clickedAnswer);
+	});
+}
+
+var clickedWrongAnswer = function(el){
+	console.log('Wrong');
+  	$(el).css('background-color', 'rgb(192, 57, 43)');
+  	$(el).click(false);
+  	if (historyEventArr[$('.history-event').attr('data-eventindex')].score===4){
+		historyEventArr[$('.history-event').attr('data-eventindex')].score=2;
+	}else if (historyEventArr[$('.history-event').attr('data-eventindex')].score===2){
+		historyEventArr[$('.history-event').attr('data-eventindex')].score=1;
+	}else if (historyEventArr[$('.history-event').attr('data-eventindex')].score===1){
+		historyEventArr[$('.history-event').attr('data-eventindex')].score=0;
+		$('#dates-row').off('click', '.year-choice', clickedAnswer);
+		
+		$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
+		$('#next-question').on('click', function(){
+			$('#dates-row').empty();
+			$('#events-row').empty();
+			pickIndexToCreateQuestion();
+			$('#dates-row').on('click', '.year-choice', clickedAnswer);
+		});
+	}console.log(historyEventArr[$('.history-event').attr('data-eventindex')].score);
+}
+
 $(document).on('ready', function() {
 	// inject JSONP script to get events data from wikipedia
   $('body').append(strDateQuery(today));
-});
+  setTimeout(pickIndexToCreateQuestion, 3000);
+  $('#dates-row').on('click', '.year-choice', clickedAnswer);
+
+  		
+ });
