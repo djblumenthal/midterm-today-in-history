@@ -1,0 +1,28 @@
+#topbar{
+	background-color: rgb(44, 62, 80);
+	color: rgb(236, 240, 241);
+	font-size: 24px;
+}
+#events-row{
+	background-color: rgb(236, 240, 241);
+}
+#dates-row{
+	background-color: rgb(189, 195, 199);
+}
+.year-choice{
+	font-size: 18px;
+	text-align: center;
+}
+.history-event{
+	font-size: 18px;
+}
+#stats-summary{
+	background-color: rgb(230, 126, 34);
+	font-size: 18px;
+}
+.points-summary{
+	text-align: center;
+}
+.year-summary{
+	text-align: center;
+}

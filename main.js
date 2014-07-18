@@ -22,6 +22,7 @@ var pickIndexToCreateQuestion = function(){
 	// console.log(eventIndex);
 	historyEventArr[eventIndex].attemptedQuestion = true;
 	userStats.totalAttempted++;
+	$('#questions-answered').text('Q: ' +userStats.totalAttempted+ '/' +historyEventArr.length);
 	// console.log(" year: "+ historyEventArr[eventIndex].year + " event: " + historyEventArr[eventIndex].eventStr);
 	var eventEl = $('<div>').addClass('col-sm-12 history-event').text(historyEventArr[eventIndex].eventStr).attr('data-eventyear', historyEventArr[eventIndex].year).attr('data-eventindex', eventIndex);
 	$('#events-row').append(eventEl);
@@ -37,6 +38,7 @@ var today = new Date();
 var strDateQuery = function(dateObj){
 	var monthsArr = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 	var month = dateObj.getMonth();
+	$('#todays-date').text(monthsArr[month] + ' '+ dateObj.getDate());
 	return createWikiEventsScript(monthsArr[month]+'%20'+dateObj.getDate()+'');
 }
 // constructor for history event objects
@@ -179,18 +181,24 @@ var clickedCorrectAnswer = function(el){
 	$(el).css('background-color', 'rgb(39, 174, 96)');
 	console.log(historyEventArr[$('.history-event').attr('data-eventindex')].score);
 	userStats.totalPoints += historyEventArr[$('.history-event').attr('data-eventindex')].score;
-	$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
-	$('#next-question').on('click', function(){
-		$('#dates-row').empty();
-		$('#events-row').empty();
-		pickIndexToCreateQuestion();
-		$('#dates-row').on('click', '.year-choice', clickedAnswer);
-	});
+	$('#point-total').text('Score: ' +userStats.totalPoints);
+	$('#average-score').text('Avg: ' +userStats.averagePerformance());
+	if (userStats.totalAttempted === historyEventArr.length){
+		$('#events-row').append('<button type="button" class="btn btn-warning btn-block" id="game-over-stats">Game Over! Click to see how you did!</button>');
+	}else {
+		$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
+		$('#next-question').on('click', function(){
+			$('#dates-row').empty();
+			$('#events-row').empty();
+			pickIndexToCreateQuestion();
+			$('#dates-row').on('click', '.year-choice', clickedAnswer);
+		});
+	}
 }
 
 var clickedWrongAnswer = function(el){
 	console.log('Wrong');
-  	$(el).css('background-color', 'rgb(192, 57, 43)');
+  	$(el).css('background-color', 'rgb(231, 76, 60)');
   	$(el).click(false);
   	if (historyEventArr[$('.history-event').attr('data-eventindex')].score===4){
 		historyEventArr[$('.history-event').attr('data-eventindex')].score=2;
@@ -199,22 +207,43 @@ var clickedWrongAnswer = function(el){
 	}else if (historyEventArr[$('.history-event').attr('data-eventindex')].score===1){
 		historyEventArr[$('.history-event').attr('data-eventindex')].score=0;
 		$('#dates-row').off('click', '.year-choice', clickedAnswer);
-		
-		$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
-		$('#next-question').on('click', function(){
-			$('#dates-row').empty();
-			$('#events-row').empty();
-			pickIndexToCreateQuestion();
-			$('#dates-row').on('click', '.year-choice', clickedAnswer);
-		});
+		if (userStats.totalAttempted === historyEventArr.length){
+			$('#events-row').append('<button type="button" class="btn btn-warning btn-block" id="game-over-stats">Game Over! Click to see how you did!</button>');
+		}else {
+			$('#events-row').append('<button type="button" class="btn btn-primary" id="next-question">Next Question!</button>');
+			$('#next-question').on('click', function(){
+				$('#dates-row').empty();
+				$('#events-row').empty();
+				pickIndexToCreateQuestion();
+				$('#dates-row').on('click', '.year-choice', clickedAnswer);
+			});
+		}
 	}console.log(historyEventArr[$('.history-event').attr('data-eventindex')].score);
 }
 
 $(document).on('ready', function() {
 	// inject JSONP script to get events data from wikipedia
-  $('body').append(strDateQuery(today));
-  setTimeout(pickIndexToCreateQuestion, 3000);
-  $('#dates-row').on('click', '.year-choice', clickedAnswer);
+  	$('body').append(strDateQuery(today));
 
-  		
- });
+  	setTimeout(pickIndexToCreateQuestion, 3000);
+  	$('#dates-row').on('click', '.year-choice', clickedAnswer);
+  	$('#button-summary').on('click', function(){
+  		$(this).hide();
+  		$('#button-hide-summary').show();
+  		for (var i=0; i<historyEventArr.length; i++){
+  			if (historyEventArr[i].attemptedQuestion){
+  				var questionSummaryDiv = $('<div class="row">');
+  				questionSummaryDiv.append("<div class='col-xs-2 points-summary'>" + historyEventArr[i].score+ " pts</div>");
+  				questionSummaryDiv.append("<div class='col-xs-2 year-summary'>" + historyEventArr[i].year + "</div>");  			
+  				questionSummaryDiv.append("<div class='col-xs-8'>" + historyEventArr[i].eventStr + "</div>");
+  				$('#stats-summary').append(questionSummaryDiv);
+  			} 
+  		}
+ 	});
+ 	$('#button-hide-summary').on('click', function(){
+ 		$(this).hide();
+ 		$('#button-summary').show();
+ 		$('#stats-summary').empty();
+
+ 	});
+});
